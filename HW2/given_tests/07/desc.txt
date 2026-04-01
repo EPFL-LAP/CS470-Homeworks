@@ -1,0 +1,1 @@
+Two instructions with multiple cycle data dependency, different instruction type, same basic block, no loop.

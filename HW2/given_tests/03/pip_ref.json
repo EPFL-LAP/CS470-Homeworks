@@ -1,0 +1,6 @@
+[
+  [" mov LC, 100", " addi x1, x2, 10", " nop", " nop", " nop"],
+  [" mov EC, 0", " mov p32, true", " nop", " nop", " nop"],
+  ["(p32) add x32, x3, x4", "(p32) sub x34, x5, x6", " nop", "(p32) ld x36, 0(x7)", " loop.pip 2"]
+]
+

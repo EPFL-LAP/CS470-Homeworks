@@ -1,0 +1,7 @@
+[
+    "mov LC, 100",
+    "mov x2, 5",
+    "mulu x2, x2, x2",
+    "add x2, x2, x2",
+    "loop 3"
+]

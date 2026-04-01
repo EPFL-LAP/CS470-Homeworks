@@ -1,0 +1,1 @@
+Multiple chains of instructions with data dependency, different instruction type, within the loop basic block.

@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+    integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+  <title>VLIW 470 State Visualization</title>
+</head>
+
+<body>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"
+    integrity="sha384-ka7Sk0Gln4gmtz2MlQnikT1wXgYsOg+OMhuP+IlRH9sENBO0LRn5q+8nbTov4+1p"
+    crossorigin="anonymous"></script>
+
+  <script src="https://unpkg.com/vue@3"></script>
+
+  <div id="app">
+
+    <nav class="navbar navbar-expand-lg navbar-light bg-light sticky-top">
+      <div class="container-fluid">
+        <a class="navbar-brand" href="#">VLIW 470 Visualizer</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarSupportedContent"
+          aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+          <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="navbarSupportedContent">
+          <ul class="navbar-nav me-auto mb-2 mb-lg-0 gap-3">
+            <li class="nav-item">
+              <form class="d-flex">
+                <input class="form-control" type="file" @change="newFileSelected">
+              </form>
+            </li>
+            <li class="nav-item dropdown">
+              <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown"
+                aria-expanded="false">
+                {{ SelectPrompt }}
+              </a>
+              <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                <li v-for="i in maximumCycle">
+                  <a class="dropdown-item" @click="select(i-1)"> {{ i-1 }}</a>
+                </li>
+              </ul>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container">
+      <div class="row gap-3">
+        <div class="col">PC: {{ SimulationData.PC }}</div>
+        <div class="col">RBB: {{ SimulationData.RBB }}</div>
+        <div class="col">LC: {{ SimulationData.LC }}</div>
+        <div class="col">EC: {{ SimulationData.EC }}</div>
+      </div>
+    </div>
+
+    <div class="container">
+      <div class="row gap-3 align-items-start">
+        <table class="table table-bordered caption-top col table-striped">
+          <caption>Register File</caption>
+          <tr>
+            <th>ID</th>
+            <th>Physical ID</th>
+            <th>Value</th>
+            <th>Predicate</th>
+          </tr>
+          <tr v-for="i in 96">
+            <td> {{ `x${i-1}` }}</td>
+            <td> {{ `r${renameRegister(i-1)}` }} </td>
+            <td> {{ SimulationData.PhysicalRegisterFile[renameRegister(i-1)] }} </td>
+            <td> {{ SimulationData.PredicateRegisters[renameRegister(i-1)] }} </td>
+          </tr>
+        </table>
+
+        <div class="col gap-3">
+          <table class="table table-bordered caption-top col table-striped">
+            <caption>ALU</caption>
+            <tr>
+              <th>ID</th>
+              <th>Valid</th>
+              <th>Destination Register</th>
+              <th>Destination Value</th>
+            </tr>
+            <tr>
+              <td> {{ 0 }} </td>
+              <td> {{ prettyALUResult(SimulationData.ALU0).predicate }} </td>
+              <td> {{ prettyALUResult(SimulationData.ALU0).destReg }} </td>
+              <td> {{ prettyALUResult(SimulationData.ALU0).value }} </td>
+            </tr>
+            <tr>
+              <td> {{ 1 }} </td>
+              <td> {{ prettyALUResult(SimulationData.ALU1).predicate }} </td>
+              <td> {{ prettyALUResult(SimulationData.ALU1).destReg }} </td>
+              <td> {{ prettyALUResult(SimulationData.ALU1).value }} </td>
+            </tr>
+          </table>
+  
+          <table class="table table-bordered caption-top col table-striped">
+            <caption>Memory Unit</caption>
+            <tr>
+              <th>Valid</th>
+              <th>Opcode</th>
+              <th>Address</th>
+              <th>Data</th>
+              <th>LoadDestination</th>
+            </tr>
+  
+            <tr>
+              <td> {{ SimulationData.Memory.predicate }} </td>
+              <td> {{ SimulationData.Memory.opcode }} </td>
+              <td> {{ SimulationData.Memory.address }} </td>
+              <td> {{ SimulationData.Memory.data }} </td>
+              <td> {{ `r${SimulationData.Memory.loadDestReg}` }} </td>
+            </tr>
+          </table>
+
+          <table class="table table-bordered caption-top col table-striped">
+            <caption>Branch Unit</caption>
+            <tr>
+              <th>Valid</th>
+              <th>Opcode</th>
+              <th>Target PC</th>
+            </tr>
+            <tr>
+              <td> {{ SimulationData.Branch.predicate }} </td>
+              <td> {{ SimulationData.Branch.opcode }} </td>
+              <td> {{ SimulationData.Branch.targetPC }} </td>
+            </tr>
+          </table>
+        </div>
+
+        <table class="table table-bordered caption-top col table-striped">
+          <caption>Multiplier Pipeline</caption>
+          <tr>
+            <th>Stage</th>
+            <th>Valid</th>
+            <th>Destination Register</th>
+            <th>Destination Value</th>
+          </tr>
+
+          <tr v-for="(item, i) in SimulationData.Multiply">
+            <td> {{ i }} </td>
+            <td> {{ item.predicate }} </td>
+            <td> {{ `r${item.targetReg}` }} </td>
+            <td> {{ item.result }} </td>
+          </tr>
+        </table>
+
+        
+
+        <table class="table table-bordered caption-top col table-striped">
+          <caption>Non-zero Memory Region</caption>
+          <tr>
+            <th>Address</th>
+            <th>Value</th>
+          </tr>
+          <tr v-for="(v, k) in SimulationData.MemoryData">
+            <td> {{ k }} </td>
+            <td> {{ v }} </td>
+          </tr>
+        </table>
+      </div>
+    </div>
+  </div>
+  <!-- How to visualize the Free List? -->
+
+  <script>
+
+    let big_data = [
+      {
+        "PC": 1,
+        "RBB": 0,
+        "LC": 0,
+        "EC": 0,
+        "PhysicalRegisterFile": [
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0,
+          0
+        ],
+        "PredicateRegisters": [
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true,
+          true
+        ],
+        "ALU0": {
+          "predicate": true,
+          "opcode": "alu",
+          "targetReg": 1,
+          "value": 1
+        },
+        "ALU1": {
+          "predicate": true,
+          "opcode": "alu",
+          "targetReg": 2,
+          "value": 2
+        },
+        "Branch": {
+            "predicate": false,
+            "opcode": "hw",
+            "targetPC": 0
+        },
+        "Memory": {
+          "predicate": true,
+          "opcode": "load",
+          "address": 0,
+          "data": 0,
+          "loadDestReg": 3
+        },
+        "Multiply": [
+          {
+            "predicate": true,
+            "targetReg": 4,
+            "result": 0
+          },
+          {
+            "predicate": false,
+            "targetReg": 0,
+            "result": 0
+          },
+          {
+            "predicate": false,
+            "targetReg": 0,
+            "result": 0
+          }
+        ]
+      },
+    ];
+
+    Vue.createApp({
+      data() {
+        return {
+          SelectPrompt: "Cycle 0",
+          CurrentCycle: 0,
+          maximumCycle: 0,
+          SimulationData: big_data[0]
+        };
+      },
+
+      methods: {
+        select(n) {
+          console.log(`${n} is selected.`);
+          this.SelectPrompt = `Cycle ${n}`;
+          this.CurrentCycle = n;
+
+          this.SimulationData = big_data[n];
+        },
+
+        renameRegister(n){
+          if (n < 32) return n;
+          RBB = this.SimulationData["RBB"]
+          x = n - RBB
+          if(x < 32){
+            return x + 64
+          }
+          return x
+        },
+
+        prettyALUResult(alu){
+          switch (alu["opcode"]) {
+            case "alu":
+              return {
+                "predicate": alu["predicate"],
+                "destReg": `r${alu["targetReg"]}`,
+                "value": alu["value"],
+              }
+            case "updateLC":
+              return {
+                "predicate": alu["predicate"],
+                "destReg": "LC",
+                "value": alu["value"],
+              }
+            case "updateEC":
+              return {
+                "predicate": alu["predicate"],
+                "destReg": "EC",
+                "value": alu["value"],
+              }
+            case "updateRBB":
+              return {
+                "predicate": alu["predicate"],
+                "destReg": "RBB",
+                "value": alu["value"],
+              }
+            case "updatePredicate":
+              return {
+                "predicate": alu["predicate"],
+                "destReg": `p${alu["targetReg"]}`,
+                "value": alu["value"] != 0,
+              }
+            default:
+              return {
+                "predicate": false,
+                "destReg": `p0`,
+                "value": 0,
+              };
+          }
+        },
+
+        newFileSelected(event) {
+          let file = event.target.files;
+          if (file.length == 0) {
+            console.log("No file is selected.");
+            this.SimulationData = {};
+          } else {
+            // We have the data we want!
+            let reader = new FileReader()
+            reader.readAsText(file[0])
+
+            reader.onloadend = () => {
+              big_data = JSON.parse(reader.result);
+              this.maximumCycle = big_data.length;
+              this.select(0);
+            };
+          }
+        },
+
+        nextCycle() {
+          if (this.CurrentCycle < this.maximumCycle - 1) {
+            this.select(this.CurrentCycle + 1)
+          }
+        },
+
+        previousCycle() {
+          if (this.CurrentCycle > 0) {
+            this.select(this.CurrentCycle - 1)
+          }
+        }
+      },
+
+      mounted() {
+        document.addEventListener("keydown", (event) => {
+          if (event.code == "ArrowLeft") {
+            this.previousCycle()
+          } else if (event.code == "ArrowRight") {
+            this.nextCycle()
+          }
+        });
+      }
+    }).mount("#app");
+  </script>
+
+</body>
+
+</html>

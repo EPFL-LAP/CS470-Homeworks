@@ -1,0 +1,9 @@
+[
+  [" addi x1, x6, 10", " nop", " nop", " ld x2, 0(x7)", " nop"],
+  [" add x3, x1, x1", " nop", " nop", " st x2, 0(x8)", " nop"],
+  [" nop", " nop", " mulu x4, x3, x3", " nop", " nop"],
+  [" nop", " nop", " nop", " nop", " nop"],
+  [" nop", " nop", " nop", " nop", " nop"],
+  [" sub x5, x4, x4", " nop", " nop", " nop", " nop"]
+]
+

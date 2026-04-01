@@ -1,0 +1,1 @@
+A loop with instruction in the basic block before the loop and in the loop.

@@ -1,0 +1,8 @@
+[
+  [" mov LC, 100", " mov x1, 10", " nop", " nop", " nop"],
+  [" mov x2, 4096", " nop", " nop", " nop", " nop"],
+  [" nop", " nop", " nop", " ld x3, 0(x2)", " nop"],
+  [" add x4, x3, x1", " nop", " nop", " nop", " nop"],
+  [" nop", " nop", " nop", " st x4, 0(x2)", " loop 2"]
+]
+
